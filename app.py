@@ -80,7 +80,7 @@ elif st.session_state.page == "predict":
 
 elif st.session_state.page == "paper":
     st.header("논문 원본")
-    pdf_path = BASE / "paper.pdf"
+    pdf_path = BASE / "paper.pdf.pdf"
     if pdf_path.exists():
         import base64
         encoded = base64.b64encode(pdf_path.read_bytes()).decode("ascii")
