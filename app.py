@@ -83,11 +83,7 @@ elif st.session_state.page == "paper":
     pdf_path = BASE / "paper.pdf.pdf"
     if pdf_path.exists():
         import base64
-        encoded = base64.b64encode(pdf_path.read_bytes()).decode("ascii")
-        st.components.v1.html(
-            f'<iframe src="data:application/pdf;base64,{encoded}" width="100%" height="720" style="border:0"></iframe>',
-            height=730,
-        )
+       st.pdf(pdf_path.read_bytes(), height=720)
         st.download_button("PDF 다운로드 / 별도 열람", data=pdf_path.read_bytes(), file_name="paper.pdf", mime="application/pdf")
         st.caption("일부 모바일 브라우저에서는 내장 PDF 스크롤이 지원되지 않을 수 있습니다.")
     else:
