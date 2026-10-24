@@ -96,10 +96,13 @@ elif st.session_state.page == "paper":
 
 elif st.session_state.page == "photos":
     st.header("구조해석 모델 사진")
-    images = [p for p in sorted((BASE / "model_photos").glob("*")) if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp"}] if (BASE / "model_photos").is_dir() else []
-    if images:
-        for path in images:
-            st.image(str(path), use_container_width=True)
-    else:
-        st.info("선택하신 모델 사진을 받으면 지정된 사진만 표시하겠습니다.")
+
+    for filename in ["model_1.png", "model_2.png", "model_3.png"]:
+        image_path = BASE / filename
+
+        if image_path.exists():
+            st.image(str(image_path), use_container_width=True)
+        else:
+            st.warning(f"{filename} 파일을 찾을 수 없습니다.")
+
     back()
