@@ -3,6 +3,7 @@ import joblib
 import pandas as pd
 import streamlit as st
 import altair as alt
+import streamlit.components.v1 as components
 
 BASE = Path(__file__).resolve().parent
 st.set_page_config(page_title="가새 구조응답 분석", page_icon="🏗️", layout="centered", initial_sidebar_state="collapsed")
@@ -178,7 +179,48 @@ elif st.session_state.page == "paper":
                 st.error(f"PDF 페이지 표시 오류: {e}")
                 st.info("위의 PDF 다운로드 버튼을 이용해 별도 뷰어에서 열람할 수 있습니다.")
         else:
-            st.pdf(pdf_bytes,height=650)
+           
+import base64
+
+pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+
+html = """
+<div id="pdf-container" style="height:100%; overflow-y:auto; background:#e8edf2; padding:8px;"></div>
+<script type="module">
+import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+const base64 = "PDF_BASE64";
+const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+const pdf = await pdfjsLib.getDocument({data: bytes}).promise;
+const container = document.getElementById("pdf-container");
+
+for (let i = 1; i <= pdf.numPages; i++) {
+  const page = await pdf.getPage(i);
+  const viewport = page.getViewport({scale: 1.5});
+
+  const canvas = document.createElement("canvas");
+  canvas.style.width = "100%";
+  canvas.style.height = "auto";
+  canvas.style.display = "block";
+  canvas.style.marginBottom = "12px";
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+
+  container.appendChild(canvas);
+
+  await page.render({
+    canvasContext: canvas.getContext("2d"),
+    viewport: viewport
+  }).promise;
+}
+</script>
+""".replace("PDF_BASE64", pdf_base64)
+
+components.html(html, height=750, scrolling=False)
+
             st.caption("일부 모바일 브라우저에서는 원본 PDF 뷰어의 확대·축소가 제한될 수 있습니다.")
     back()
 
