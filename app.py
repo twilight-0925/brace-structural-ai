@@ -46,11 +46,84 @@ if st.session_state.page == "home":
         go("photos")
     st.caption("본 서비스는 연구용으로, 실제 구조설계의 적합성 판단을 대신하지 않습니다.")
 
+
 elif st.session_state.page == "shape":
     st.header("가새 형태별 구조해석 결과")
-    st.info("X형·K형·역V형의 실제 MIDAS 해석 결과를 비교하는 화면입니다. AI 예측을 사용하지 않습니다.")
-    st.write("형태별 실제 해석값이 제공되면 이 화면에 원본 데이터를 표시하겠습니다.")
+    st.caption("MIDAS Gen 해석 결과 | 학사논문 제3장")
+    st.info("실제 구조해석 결과이며 AI 예측값이 아닙니다.")
+
+    st.subheader("① 가새 형태별 고유주기 비교")
+
+    period_df = pd.DataFrame({
+        "가새 형태": ["무가새", "X형", "K형", "역V형"],
+        "고유주기 (sec)": [0.6532, 0.5157, 0.5233, 0.5231]
+    }).set_index("가새 형태")
+
+    st.bar_chart(period_df)
+    st.dataframe(period_df, use_container_width=True)
+
+    st.success(
+        "X형 가새의 고유주기는 0.5157초로 가장 짧으며, "
+        "무가새 대비 약 21.05% 감소했습니다."
+    )
+
+    st.subheader("② 최대 층간변위비 비교")
+
+    drift_df = pd.DataFrame({
+        "가새 형태": ["무가새", "X형", "K형", "역V형"],
+        "X방향": [0.0073, 0.0074, 0.0074, 0.0074],
+        "Y방향": [0.0051, 0.0046, 0.0047, 0.0047]
+    })
+
+    st.dataframe(drift_df, use_container_width=True)
+
+    st.subheader("③ 최대변위 비교")
+
+    disp_df = pd.DataFrame({
+        "가새 형태": ["무가새", "X형", "K형", "역V형"],
+        "X방향 (mm)": [13.8, 13.9, 13.9, 13.8],
+        "Y방향 (mm)": [5.3, 5.3, 5.3, 5.3]
+    })
+
+    st.dataframe(disp_df, use_container_width=True)
+
+    st.subheader("④ 밑면전단력 비교")
+
+    shear_df = pd.DataFrame({
+        "가새 형태": ["무가새", "X형", "K형", "역V형"],
+        "X방향 (kN)": [
+            2458.34, 2462.275596, 2463.417778, 2461.678600
+        ],
+        "Y방향 (kN)": [
+            2458.34, 2462.275603, 2463.417786, 2461.678608
+        ]
+    })
+
+    st.dataframe(
+        shear_df.style.format({
+            "X방향 (kN)": "{:.3f}",
+            "Y방향 (kN)": "{:.3f}"
+        }),
+        use_container_width=True
+    )
+
+    st.divider()
+    st.subheader("⑤ 종합 분석 및 최적 가새 선정")
+
+    st.markdown(
+        "**최적 가새 형태: X형 가새**\n\n"
+        "X형 가새는 세 가지 가새 형태 중 고유주기가 "
+        "가장 짧게 나타났습니다. "
+        "또한 Y방향 층간변위비가 상대적으로 작아 "
+        "본 연구에서는 X형 가새를 최적 형태로 선정했습니다.\n\n"
+        "다만 최대변위와 밑면전단력의 차이는 크지 않으므로 "
+        "모든 구조응답에서 절대적으로 우수하다는 의미는 아닙니다."
+    )
+
+    st.caption("출처: 학사학위논문 표 3.1~3.4")
     back()
+
+
 
 elif st.session_state.page == "predict":
     st.header("X형 가새 크기에 따른 AI 예측")
