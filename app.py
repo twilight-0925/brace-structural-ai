@@ -9,7 +9,7 @@ st.set_page_config(page_title="가새 구조응답 분석", page_icon="🏗️",
 
 st.markdown("""
 <style>
-.block-container {max-width: 800px; padding-top: 1.2rem; padding-bottom: 3rem}
+.block-container {max-width: 800px; padding-top: 4rem; padding-bottom: 3rem}
 h1,h2,h3 {color:#0B294B !important; line-height:1.35 !important}
 .stButton > button, .stFormSubmitButton > button, .stDownloadButton > button {
  width:100%; min-height:3.3rem; border-radius:12px; font-weight:650;
@@ -25,7 +25,7 @@ h1,h2,h3 {color:#0B294B !important; line-height:1.35 !important}
 .section-tag {border-left:5px solid #D97716; padding:7px 12px; background:#EAF1F8;
  color:#0B294B; font-weight:700; border-radius:4px; margin:12px 0}
 @media (max-width:640px) {
- .block-container {padding:1rem .9rem 2.5rem}
+ .block-container {padding:2rem .9rem 2.5rem}
  h1 {font-size:1.85rem !important} h2 {font-size:1.45rem !important} h3 {font-size:1.2rem !important}
  .hero {padding:20px 16px} .hero-title {font-size:1.4rem}
  [data-testid="stMetricValue"] {font-size:1.65rem !important}
