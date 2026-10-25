@@ -178,13 +178,13 @@ elif st.session_state.page == "paper":
             except Exception as e:
                 st.error(f"PDF 페이지 표시 오류: {e}")
                 st.info("위의 PDF 다운로드 버튼을 이용해 별도 뷰어에서 열람할 수 있습니다.")
+       
         else:
-           
-import base64
+            import base64
 
-pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
 
-html = """
+            html = """
 <div id="pdf-container" style="height:100%; overflow-y:auto; background:#e8edf2; padding:8px;"></div>
 <script type="module">
 import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
@@ -219,9 +219,12 @@ for (let i = 1; i <= pdf.numPages; i++) {
 </script>
 """.replace("PDF_BASE64", pdf_base64)
 
-components.html(html, height=750, scrolling=False)
+            components.html(html, height=750, scrolling=False)
 
-            st.caption("일부 모바일 브라우저에서는 원본 PDF 뷰어의 확대·축소가 제한될 수 있습니다.")
+            st.caption("논문을 위아래로 스크롤하여 연속 열람할 수 있습니다.")
+
+    back()
+
     back()
 
 elif st.session_state.page == "photos":
