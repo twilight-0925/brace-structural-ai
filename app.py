@@ -464,6 +464,7 @@ elif st.session_state.page == "paper":
 # ⑤ 구조해석 모델 사진
 # -------------------------------------------------
 
+
 elif st.session_state.page == "photos":
 
     st.header("구조해석 모델 사진")
@@ -473,25 +474,23 @@ elif st.session_state.page == "photos":
         "저층 장스팬 구조물의 3차원 구조해석 모델입니다."
     )
 
-    for filename in [
-        "model_1.png",
-        "model_2.png",
-        "model_3.png"
-    ]:
+    photos = [
+        ("model_1.png", "그림 1. X형 가새 구조해석 모델"),
+        ("model_2.png", "그림 2. K형 가새 구조해석 모델"),
+        ("model_3.png", "그림 3. 역V형 가새 구조해석 모델")
+    ]
 
+    for filename, caption in photos:
         image_path = BASE / filename
 
         if image_path.exists():
-
             st.image(
                 str(image_path),
+                caption=caption,
                 use_container_width=True
             )
-
         else:
-
-            st.warning(
-                f"{filename} 파일을 찾을 수 없습니다."
-            )
+            st.warning(f"{filename} 파일을 찾을 수 없습니다.")
 
     back()
+
