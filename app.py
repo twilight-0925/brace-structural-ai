@@ -143,89 +143,146 @@ elif st.session_state.page == "predict":
             st.error(f"모델 실행 오류: {e}")
     back()
 
+
 elif st.session_state.page == "paper":
     st.header("논문 원본")
-    # 저장소에 있는 실제 PDF 파일명을 자동 확인합니다.
-    pdf_names = ["paper.pdf.pdf", "pdf.pdf", "paper.pdf"]
-    pdf_path = next((BASE / name for name in pdf_names if (BASE / name).is_file()), None)
-    if pdf_path is None:
-        st.warning("논문 PDF 파일을 찾을 수 없습니다. 저장소의 PDF 파일명을 확인해주세요.")
-    else:
+
+    pdf_path = BASE / "paper.pdf.pdf"
+
+    if pdf_path.exists():
+        import base64
+        import streamlit.components.v1 as components
+
         pdf_bytes = pdf_path.read_bytes()
-        st.download_button("📄 논문 PDF 다운로드",data=pdf_bytes,file_name="brace_thesis.pdf",
-                           mime="application/pdf",use_container_width=True)
-        mode = st.radio("열람 방식",["화면 너비에 맞춰 보기 (모바일 추천)","원본 PDF 뷰어"],horizontal=False)
-        if mode.startswith("화면"):
-            try:
-                import fitz
-                with fitz.open(stream=pdf_bytes,filetype="pdf") as doc:
-                    total = len(doc)
-                if "pdf_page" not in st.session_state:
-                    st.session_state.pdf_page = 1
-                st.session_state.pdf_page = max(1,min(st.session_state.pdf_page,total))
-                selected = st.number_input("페이지",min_value=1,max_value=total,step=1,key="pdf_page")
-                st.image(render_pdf_page(pdf_bytes,selected),use_container_width=True)
-                st.caption(f"{selected} / {total} 페이지 · 페이지 전체를 화면 너비에 맞춰 표시합니다. 글자가 작으면 PDF를 다운로드해 확대해서 읽으세요.")
-                left,right = st.columns(2)
-                with left:
-                    if st.button("← 이전 페이지",disabled=selected<=1):
-                        st.session_state.pdf_page -= 1
-                        st.rerun()
-                with right:
-                    if st.button("다음 페이지 →",disabled=selected>=total):
-                        st.session_state.pdf_page += 1
-                        st.rerun()
-            except Exception as e:
-                st.error(f"PDF 페이지 표시 오류: {e}")
-                st.info("위의 PDF 다운로드 버튼을 이용해 별도 뷰어에서 열람할 수 있습니다.")
-       
-        else:
-            import base64
 
-            pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+        st.download_button(
+            "논문 PDF 다운로드",
+            data=pdf_bytes,
+            file_name="논문.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
-            html = """
-<div id="pdf-container" style="height:100%; overflow-y:auto; background:#e8edf2; padding:8px;"></div>
+        pdf_base64 = base64.b64encode(pdf_bytes).decode("utf-8")
+
+        html = """
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #E8EDF2;
+}
+#viewer {
+    height: 100vh;
+    overflow-y: auto;
+    padding: 8px;
+    box-sizing: border-box;
+}
+.page {
+    width: 100%;
+    margin-bottom: 12px;
+    background: white;
+    min-height: 100px;
+}
+.page canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+#status {
+    text-align: center;
+    padding: 15px;
+    color: #0B294B;
+}
+</style>
+
+<div id="viewer">
+    <div id="status">논문을 불러오는 중입니다...</div>
+    <div id="pages"></div>
+</div>
+
 <script type="module">
-import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
+import * as pdfjsLib from
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+"https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
-const base64 = "PDF_BASE64";
-const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-const pdf = await pdfjsLib.getDocument({data: bytes}).promise;
-const container = document.getElementById("pdf-container");
+const viewer = document.getElementById("viewer");
+const pages = document.getElementById("pages");
+const status = document.getElementById("status");
 
-for (let i = 1; i <= pdf.numPages; i++) {
-  const page = await pdf.getPage(i);
-  const viewport = page.getViewport({scale: 1.5});
+try {
+    const binary = atob("PDF_BASE64");
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
 
-  const canvas = document.createElement("canvas");
-  canvas.style.width = "100%";
-  canvas.style.height = "auto";
-  canvas.style.display = "block";
-  canvas.style.marginBottom = "12px";
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+    const pdf = await pdfjsLib.getDocument({data: bytes}).promise;
 
-  container.appendChild(canvas);
+    status.textContent = "총 " + pdf.numPages + "페이지";
 
-  await page.render({
-    canvasContext: canvas.getContext("2d"),
-    viewport: viewport
-  }).promise;
+    const observer = new IntersectionObserver(
+        async (entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+
+                const holder = entry.target;
+                if (holder.dataset.loaded === "true") continue;
+                holder.dataset.loaded = "true";
+                observer.unobserve(holder);
+
+                const number = Number(holder.dataset.page);
+                const page = await pdf.getPage(number);
+
+                const original = page.getViewport({scale: 1});
+                const scale = Math.min(
+                    2,
+                    (holder.clientWidth * 1.5) / original.width
+                );
+                const viewport = page.getViewport({scale});
+
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
+
+                holder.appendChild(canvas);
+
+                await page.render({
+                    canvasContext: canvas.getContext("2d"),
+                    viewport: viewport
+                }).promise;
+            }
+        },
+        {root: viewer, rootMargin: "800px 0px"}
+    );
+
+    const first = await pdf.getPage(1);
+    const size = first.getViewport({scale: 1});
+    const ratio = size.height / size.width;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const holder = document.createElement("div");
+        holder.className = "page";
+        holder.dataset.page = i;
+        holder.style.aspectRatio = size.width + "/" + size.height;
+        pages.appendChild(holder);
+        observer.observe(holder);
+    }
+
+} catch (error) {
+    status.textContent = "PDF 표시 오류: " + error.message;
 }
 </script>
 """.replace("PDF_BASE64", pdf_base64)
 
-            components.html(html, height=750, scrolling=False)
+        components.html(html, height=750, scrolling=False)
 
-            st.caption("논문을 위아래로 스크롤하여 연속 열람할 수 있습니다.")
+        st.caption("논문 화면 안에서 위아래로 스크롤하여 열람하세요.")
+
+    else:
+        st.error("논문 PDF 파일을 찾을 수 없습니다.")
 
     back()
 
-    back()
 
 elif st.session_state.page == "photos":
     st.header("구조해석 모델 사진")
